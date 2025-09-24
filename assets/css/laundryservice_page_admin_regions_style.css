@@ -1,0 +1,5 @@
+/* Styles extracted for laundryservice/pages/admin/regions.cfm */
+body { background-color: #f5f6fa; }
+        .card-stat { text-align: center; padding: 1rem; border-radius: 12px; }
+        .card-stat h4 { margin: 0; font-weight: bold; }
+        .table th, .table td { vertical-align: middle; }

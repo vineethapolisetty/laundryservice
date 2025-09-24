@@ -1,0 +1,36 @@
+<!--- /laundryservice/pages/user/magic_login.cfm --->
+<cfparam name="url.token" default="">
+
+<cfif NOT len(url.token)>
+  <cfoutput><h3>Invalid link.</h3></cfoutput>
+  <cfabort>
+</cfif>
+
+<cfset svc = createObject("component","components.MagicLinkService")>
+<cfset res = svc.consumeToken(url.token)>
+
+<cfif res.ok>
+  <!-- set sessions (honor your existing keys) -->
+  <cfset session.userID   = res.userID>
+  <cfset session.userName = res.fullName>
+  <cfset session.userid   = session.userID> <!-- matches your Application.cfc guard -->
+  <cflocation url="/laundryservice/index.cfm?fuse=dashboard" addtoken="false">
+<cfelse>
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Magic link</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  </head>
+  <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+      <div class="mb-4 rounded border border-red-200 bg-red-50 text-red-700 p-3">
+        <cfoutput>#encodeForHTML(res.message)#</cfoutput>
+      </div>
+      <a href="/laundryservice/index.cfm?fuse=email_login" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">Request new link</a>
+    </div>
+  </body>
+  </html>
+</cfif>

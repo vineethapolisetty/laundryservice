@@ -1,0 +1,23 @@
+<cfif structKeyExists(form, "phone")>
+
+  <!-- Generate a random 4-digit OTP -->
+  <cfset session.phone = form.phone>
+  <cfset session.region = form.region>
+  <cfset session.otp = randRange(1000, 9999)> <!-- Generates OTP -->
+
+  <!-- Simulate sending OTP -->
+  <cfoutput>
+    <h2>📲 OTP Sent</h2>
+    <p>We've sent an OTP to <strong>#session.region# #session.phone#</strong></p>
+    <p style="color:gray;">(Simulated OTP: <strong>#session.otp#</strong>)</p>  <!-- Simulated -->
+
+    <form method="post" action="confirm_otp.cfm">
+      <label>Enter OTP:</label><br>
+      <input type="text" name="otp" required><br><br>
+      <button type="submit">Verify</button>
+    </form>
+  </cfoutput>
+
+<cfelse>
+  <cfoutput><p style="color:red;">❌ No phone number submitted.</p></cfoutput>
+</cfif>

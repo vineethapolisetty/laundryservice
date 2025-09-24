@@ -1,0 +1,262 @@
+/* Styles extracted for laundryservice/pages/user/orderStatus.cfm */
+:root{
+      --bg:#f5f6fb;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --text:#1f2937;
+      --primary:#4f46e5;   /* Indigo */
+      --primary-contrast:#ffffff;
+      --accent:#10b981;    /* Emerald */
+      --border:#e5e7eb;
+      --shadow:0 10px 20px rgba(0,0,0,.06), 0 6px 6px rgba(0,0,0,.04);
+      --radius:14px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, #f7f7ff 0%, #f0f3ff 100%);
+      color: var(--text);
+      margin:0;
+      padding:0;
+    }
+
+    .page{
+      min-height:100svh;
+      padding: 16px 16px 88px; /* bottom pad for fixed footer */
+      display:flex;
+      justify-content:center;
+    }
+
+    .container{
+      width:100%;
+      max-width: 560px;
+    }
+
+    /* Header */
+    .header{
+      position:sticky;
+      top:0;
+      z-index:5;
+      background: transparent;
+      padding: 8px 0 12px;
+    }
+    .header-inner{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .back-button{
+      position:absolute;
+      left:0;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+      color:var(--text);
+      background: rgba(255,255,255,.8);
+      backdrop-filter: blur(4px);
+      border:1px solid var(--border);
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+      transition: transform .06s ease;
+    }
+    .back-button:active{ transform: translateY(1px); }
+    .header h2{
+      margin:0;
+      font-size: 22px;
+      letter-spacing:.2px;
+    }
+
+    /* Hero card */
+    .hero{
+      background: var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .hero img{
+      width:100%;
+      height:160px;
+      object-fit:cover;
+      display:block;
+    }
+
+    /* Order card */
+    .order-card{
+      background: var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:16px;
+      margin-top:16px;
+    }
+    .order-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:6px;
+      font-weight:600;
+      letter-spacing:.2px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:600;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#eef2ff;
+      color:#3730a3;
+      border:1px solid #e0e7ff;
+      white-space:nowrap;
+    }
+    .order-meta{
+      font-size:13px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .order-meta .dot{
+      width:4px; height:4px; border-radius:50%; background:#c7cad3; display:inline-block;
+    }
+
+    /* Progress */
+    .progress{
+      background:#eef2ff;
+      border:1px solid #e0e7ff;
+      height:10px;
+      border-radius:999px;
+      overflow:hidden;
+      margin:12px 0 10px;
+    }
+    .progress-inner{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--primary) 0%, #7c3aed 100%);
+      transition: width .35s ease;
+    }
+    .stages{
+      list-style:none;
+      padding:0;
+      margin:10px 0 0;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+    @media (min-width:480px){
+      .stages{ grid-template-columns:repeat(2, 1fr); }
+    }
+    .stage{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:14px;
+      padding:10px 12px;
+      border:1px dashed #e5e7eb;
+      border-radius:12px;
+      background: #fafafe;
+    }
+    .stage i{ opacity:.55; }
+    .stage.active{
+      border-style:solid;
+      border-color:#d1fae5;
+      background:#ecfdf5;
+    }
+    .stage.active i{
+      color: var(--accent);
+      opacity:1;
+    }
+
+    /* Buttons */
+    .buttons{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+    }
+    .btn{
+      flex:1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:12px;
+      border-radius:12px;
+      font-weight:700;
+      border:1px solid transparent;
+      cursor:pointer;
+      text-decoration:none;
+      transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+      box-shadow: var(--shadow);
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn-primary{
+      background: var(--primary);
+      color: var(--primary-contrast);
+    }
+    .btn-outline{
+      background:#ffffff;
+      color: var(--primary);
+      border-color:#c7d2fe;
+    }
+
+    /* Assistance card */
+    .assist h3{
+      margin:0 0 8px 0;
+      font-size:18px;
+    }
+
+    /* Footer nav */
+    .footer-nav{
+      position: fixed;
+      bottom: 0; left:0; right:0;
+      height:64px;
+      background:#ffffff;
+      border-top:1px solid var(--border);
+      display:flex;
+      justify-content:space-around;
+      align-items:center;
+      box-shadow: 0 -6px 14px rgba(0,0,0,.04);
+      z-index: 10;
+    }
+    .footer-nav a{
+      text-decoration:none;
+      color: var(--text);
+      font-size:12px;
+      text-align:center;
+      line-height:1.1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:4px;
+      padding-top:6px;
+    }
+    .footer-nav a[aria-current="page"]{
+      color: var(--primary);
+      font-weight:700;
+    }
+
+    /* Empty state */
+    .empty{
+      background: var(--card);
+      border:1px dashed var(--border);
+      border-radius: var(--radius);
+      padding:20px;
+      margin-top:16px;
+      text-align:center;
+      color: var(--muted);
+    }
+
+    /* Hide legacy list but keep for fallback/SEO if you want */
+    .legacy-links{ display:none; }
+
+.page-orderStatus-style { width:#currentProgress#%; }

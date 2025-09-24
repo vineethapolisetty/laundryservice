@@ -1,0 +1,267 @@
+<!--- /pages/user/payment_add.cfm --->
+<cfif NOT structKeyExists(session, "userid")>
+  <cflocation url="/laundryservice/index.cfm?fuse=login">
+</cfif>
+
+<cfobject component="components.UserService" name="userService">
+<!-- If you already have a PaymentService, this will be used below -->
+<cftry>
+  <cfobject component="components.PaymentService" name="paymentService">
+  <cfcatch></cfcatch>
+</cftry>
+
+<!-- Handle POST (only tokenized, never PAN/CVV) -->
+<cfset addOK = false>
+<cfset addMsg = "">
+<cfif structKeyExists(form, "doAdd")>
+  <cfset token    = trim(form.token)>
+  <cfset brand    = trim(form.brand)>
+  <cfset last4    = trim(form.last4)>
+  <cfset expMonth = val(form.expMonth)>
+  <cfset expYear  = val(form.expYear)>
+  <cfset isDefault= (structKeyExists(form,"isDefault") AND form.isDefault EQ "1")>
+
+  <!-- Minimal server-side validation -->
+  <cfset errs = []>
+  <cfscript>
+    if (!len(token)) arrayAppend(errs, "Missing token (did you disable JS?)");
+    if (!len(brand)) arrayAppend(errs, "Missing brand");
+    if (!reFind("^\d{4}$", last4)) arrayAppend(errs, "Invalid last4");
+    if (expMonth LT 1 OR expMonth GT 12) arrayAppend(errs, "Invalid expiry month");
+    if (expYear LT year(now())-1 OR expYear GT year(now())+25) arrayAppend(errs, "Invalid expiry year");
+  </cfscript>
+
+  <cfif arrayLen(errs) EQ 0>
+    <!-- Try common service method names safely -->
+    <cftry>
+      <cfif isDefined("paymentService")>
+        <!--- preferred signatures you might have --->
+        <cfset paymentService.addPaymentMethod(session.userid, token, brand, last4, expMonth, expYear, isDefault)>
+        <cfset addOK = true>
+      <cfelse>
+        <cfthrow message="No PaymentService found.">
+      </cfif>
+      <cfcatch>
+        <!-- Try alternates -->
+        <cftry>
+          <cfif isDefined("paymentService")>
+            <cfset paymentService.saveCard(session.userid, token, brand, last4, expMonth, expYear, isDefault)>
+            <cfset addOK = true>
+          <cfelse>
+            <cfthrow message="Payment backend not implemented.">
+          </cfif>
+          <cfcatch>
+            <cftry>
+              <cfif isDefined("paymentService")>
+                <cfset paymentService.addCard(session.userid, {
+                  token=token, brand=brand, last4=last4, expMonth=expMonth, expYear=expYear, isDefault=isDefault
+                })>
+                <cfset addOK = true>
+              <cfelse>
+                <cfthrow message="Payment backend not implemented.">
+              </cfif>
+              <cfcatch>
+                <cfset addOK = false>
+                <cfset addMsg = "We couldn’t save your card. Please implement one of: addPaymentMethod(...), saveCard(...), or addCard(...).">
+              </cfcatch>
+            </cftry>
+          </cfcatch>
+        </cftry>
+      </cfcatch>
+    </cftry>
+  <cfelse>
+    <cfset addMsg = arrayToList(errs, " ")>
+  </cfif>
+
+  <!-- On success go back to Profile (or a payments list if you add one) -->
+  <cfif addOK>
+    <cflocation url="/laundryservice/index.cfm?fuse=profile" addtoken="false">
+  </cfif>
+</cfif>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Add Payment Method</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root{ --bg:#f4f6fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --brand:#5b5ee1; --danger:#ef4444; --shadow:0 8px 24px rgba(16,24,40,.08); --radius:16px; }
+    *{ box-sizing:border-box }
+    body{ margin:0; background:var(--bg); color:var(--text);
+          font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial; padding-bottom:80px; -webkit-tap-highlight-color:transparent; }
+    .header{ position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--line);
+             padding:14px 16px; display:flex; align-items:center; gap:10px; }
+    .header a{ color:var(--text); text-decoration:none; font-size:18px; }
+    .header h2{ margin:0 auto; font-size:20px; font-weight:800; text-align:center; }
+    .container{ max-width:780px; margin:0 auto; padding:16px; }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-bottom:16px; }
+    label{ font-size:12px; color:var(--muted); }
+    input, select{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-size:14px; outline:none; background:#fff; }
+    .row{ display:grid; gap:8px; margin-bottom:12px; }
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 12px; border-radius:12px; border:1px solid transparent; text-decoration:none; font-weight:800; font-size:13px; cursor:pointer; }
+    .btn-primary{ background:var(--brand); color:#fff; }
+    .btn-secondary{ background:#fff; color:var(--brand); border-color:var(--brand); }
+    .alert{ padding:10px 12px; border-radius:12px; margin-bottom:12px; }
+    .alert-warn{ background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; }
+    .footer-nav{ position:fixed; left:0; right:0; bottom:0; height:64px; background:#fff; border-top:1px solid var(--line); display:flex; align-items:center; justify-content:space-around; z-index:20; }
+    .footer-nav a{ text-decoration:none; color:var(--text); font-size:12px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .footer-nav a.active{ color:var(--brand); }
+    .inline{ display:inline-block; margin-left:6px; font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="/laundryservice/index.cfm?fuse=profile" aria-label="Back"><i class="fa-solid fa-arrow-left"></i></a>
+  <h2>Add Payment Method</h2>
+</div>
+
+<div class="container">
+
+  <cfif structKeyExists(variables,"addMsg") AND len(addMsg)>
+    <div class="alert alert-warn"><cfoutput>#encodeForHTML(addMsg)#</cfoutput></div>
+  </cfif>
+
+  <div class="card">
+    <!-- We never post cardNumber/cvv to server. JS will create a token + last4 + brand. -->
+    <form id="cardForm" method="post" action="/laundryservice/index.cfm?fuse=payment_add" autocomplete="off" onsubmit="return tokenizeAndSubmit()">
+      <div class="row">
+        <label for="cardName">Cardholder Name</label>
+        <input type="text" id="cardName" placeholder="Name on card" required>
+      </div>
+
+      <div class="row">
+        <label for="cardNumber">Card Number <span id="brandHint" class="inline"></span></label>
+        <input type="text" id="cardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" required>
+      </div>
+
+      <div class="grid2">
+        <div class="row">
+          <label for="exp">Expiry (MM/YY)</label>
+          <input type="text" id="exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" required>
+        </div>
+        <div class="row">
+          <label for="cvv">CVV</label>
+          <input type="password" id="cvv" inputmode="numeric" autocomplete="cc-csc" placeholder="***" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <label><input type="checkbox" id="makeDefault"> Set as default</label>
+      </div>
+
+      <!-- Hidden fields actually sent to server -->
+      <input type="hidden" name="token" id="hidToken">
+      <input type="hidden" name="brand" id="hidBrand">
+      <input type="hidden" name="last4" id="hidLast4">
+      <input type="hidden" name="expMonth" id="hidExpMonth">
+      <input type="hidden" name="expYear" id="hidExpYear">
+      <input type="hidden" name="isDefault" id="hidIsDefault" value="0">
+      <input type="hidden" name="doAdd" value="1">
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary"><i class="fa-regular fa-credit-card"></i> Save Card</button>
+        <a href="/laundryservice/index.cfm?fuse=profile" class="btn btn-secondary"><i class="fa-solid fa-user"></i> Cancel</a>
+      </div>
+    </form>
+    <p class="inline">We never store your full card number on our servers.</p>
+  </div>
+
+</div>
+
+<!-- Bottom Navbar -->
+<nav class="footer-nav" aria-label="Bottom navigation">
+  <a href="/laundryservice/index.cfm?fuse=dashboard"><i class="fa-solid fa-house"></i><span>Home</span></a>
+  <a href="/laundryservice/index.cfm?fuse=orderhistory"><i class="fa-solid fa-clipboard-list"></i><span>History</span></a>
+  <a href="/laundryservice/index.cfm?fuse=profile" class="active"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+</nav>
+
+<script>
+  // Basic helpers
+  const brandHint = document.getElementById('brandHint');
+  const numEl = document.getElementById('cardNumber');
+  const expEl = document.getElementById('exp');
+  const cvvEl = document.getElementById('cvv');
+
+  numEl.addEventListener('input', () => {
+    let v = numEl.value.replace(/\D/g,'');
+    // spacing
+    numEl.value = v.replace(/(.{4})/g,'$1 ').trim();
+    // detect brand
+    const brand = detectBrand(v);
+    brandHint.textContent = brand ? `(${brand})` : '';
+  });
+
+  expEl.addEventListener('input', () => {
+    let v = expEl.value.replace(/\D/g,'');
+    if(v.length >= 3){
+      v = v.slice(0,4);
+      expEl.value = v.slice(0,2) + '/' + v.slice(2);
+    }else{
+      expEl.value = v;
+    }
+  });
+
+  function detectBrand(digits){
+    if(/^4/.test(digits)) return 'Visa';
+    if(/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(digits)) return 'Mastercard';
+    if(/^3[47]/.test(digits)) return 'Amex';
+    if(/^6(011|5)/.test(digits)) return 'Discover';
+    return '';
+  }
+
+  function luhnValid(num){
+    let sum=0, dbl=false;
+    for(let i=num.length-1;i>=0;i--){
+      let d = parseInt(num[i],10);
+      if(dbl){ d*=2; if(d>9) d-=9; }
+      sum += d; dbl = !dbl;
+    }
+    return sum % 10 === 0;
+  }
+
+  function tokenizeAndSubmit(){
+    const name = document.getElementById('cardName').value.trim();
+    const num  = numEl.value.replace(/\D/g,'');
+    const exp  = expEl.value.replace(/\s/g,'');
+    const cvv  = cvvEl.value.replace(/\D/g,'');
+
+    // Basic checks
+    if(!name) { alert('Enter cardholder name'); return false; }
+    if(num.length < 12 || num.length > 19 || !luhnValid(num)){ alert('Enter a valid card number'); return false; }
+    if(!/^\d{2}\/\d{2}$/.test(exp)){ alert('Enter expiry as MM/YY'); return false; }
+
+    const mm = parseInt(exp.slice(0,2),10);
+    const yy = parseInt('20' + exp.slice(3),10);
+    if(mm<1 || mm>12){ alert('Invalid expiry month'); return false; }
+    const now = new Date(), cm = now.getMonth()+1, cy = now.getFullYear();
+    if(yy < cy || (yy===cy && mm < cm)){ alert('Card is expired'); return false; }
+    if(cvv.length < 3 || cvv.length > 4){ alert('Invalid CVV'); return false; }
+
+    // Simulated token (replace with real gateway tokenization in production)
+    const brand = detectBrand(num) || 'Card';
+    const token = 'tok_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+    // Fill hidden fields; DO NOT send PAN/CVV
+    document.getElementById('hidToken').value    = token;
+    document.getElementById('hidBrand').value    = brand;
+    document.getElementById('hidLast4').value    = num.slice(-4);
+    document.getElementById('hidExpMonth').value = String(mm);
+    document.getElementById('hidExpYear').value  = String(yy);
+    document.getElementById('hidIsDefault').value= document.getElementById('makeDefault').checked ? '1' : '0';
+
+    // Clear sensitive fields before submit
+    numEl.value = '';
+    expEl.value = '';
+    cvvEl.value = '';
+
+    return true; // submit
+  }
+</script>
+
+</body>
+</html>

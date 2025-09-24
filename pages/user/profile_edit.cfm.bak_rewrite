@@ -1,0 +1,188 @@
+<!--- /pages/user/profile_edit.cfm --->
+<cfif NOT structKeyExists(session, "userid")>
+  <cflocation url="login.cfm">
+</cfif>
+
+<cfobject component="components.UserService" name="userService">
+
+<!-- Load current profile (safe even if columns are missing) -->
+<cfset profile = "" />
+<cftry>
+  <cfset profile = userService.getProfile(session.userid)>
+  <cfcatch></cfcatch>
+</cftry>
+<cfset hasProfile = isQuery(profile) AND profile.recordCount GT 0>
+<cfset cols = hasProfile ? profile.columnList : "">
+<cfset getCol = function(name,def){ return (hasProfile AND listFindNoCase(cols,name)) ? toString(profile[name][1]) : def; }>
+
+<cfset curName   = getCol("FullName","")>
+<cfset curEmail  = getCol("Email","")>
+<cfset curPhone  = getCol("Phone","")>
+<cfset curAvatar = getCol("avatarURL","")>
+
+<!-- Handle save -->
+<cfset savedOK = false>
+<cfset saveMsg = "">
+<cfif structKeyExists(form,"doSave")>
+  <cfset fName   = trim(form.fullName)>
+  <cfset fEmail  = trim(form.email)>
+  <cfset fPhone  = trim(form.phone)>
+  <cfset fAvatar = trim(form.avatarURL)>
+
+  <!-- Simple validation -->
+  <cfset errors = []>
+  <cfif NOT len(fName)><cfset arrayAppend(errors,"Name is required.")></cfif>
+  <cfif len(fEmail) AND NOT reFindNoCase("^[^@\s]+@[^@\s]+\.[^@\s]+$", fEmail)><cfset arrayAppend(errors,"Enter a valid email.")></cfif>
+  <cfif len(fPhone) AND NOT reFind("^[0-9+\-\s()]{7,}$", fPhone)><cfset arrayAppend(errors,"Enter a valid phone.")></cfif>
+
+  <cfif arrayLen(errors) EQ 0>
+    <!-- Try common update method shapes safely -->
+    <cfset updateWorked = false>
+    <cftry>
+      <!-- Most likely signature -->
+      <cfset userService.updateProfile(session.userid, fName, fEmail, fPhone, fAvatar)>
+      <cfset updateWorked = true>
+      <cfcatch>
+        <cftry>
+          <!-- Alternate names / shapes -->
+          <cfset userService.saveProfile(session.userid, fName, fEmail, fPhone, fAvatar)>
+          <cfset updateWorked = true>
+          <cfcatch>
+            <cftry>
+              <cfset userService.updateUser(session.userid, {
+                FullName=fName, Email=fEmail, Phone=fPhone, avatarURL=fAvatar
+              })>
+              <cfset updateWorked = true>
+              <cfcatch>
+                <!-- Final fallback: do nothing but show info -->
+              </cfcatch>
+            </cftry>
+          </cfcatch>
+        </cftry>
+      </cfcatch>
+    </cftry>
+
+    <cfif updateWorked>
+      <cfset savedOK = true>
+      <cfset saveMsg = "Profile updated successfully.">
+      <!-- Refresh current values -->
+      <cftry>
+        <cfset profile = userService.getProfile(session.userid)>
+        <cfcatch></cfcatch>
+      </cftry>
+      <cfset hasProfile = isQuery(profile) AND profile.recordCount GT 0>
+      <cfset cols = hasProfile ? profile.columnList : "">
+      <cfset curName   = getCol("FullName", fName)>
+      <cfset curEmail  = getCol("Email",  fEmail)>
+      <cfset curPhone  = getCol("Phone",  fPhone)>
+      <cfset curAvatar = getCol("avatarURL", fAvatar)>
+    <cfelse>
+      <cfset saveMsg = "We couldn't call your update method. Please implement one of:
+        updateProfile(userId, fullName, email, phone, avatarURL) / saveProfile(...) / updateUser(userId, struct).">
+    </cfif>
+  <cfelse>
+    <cfset saveMsg = arrayToList(errors, " ")>
+  </cfif>
+</cfif>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Edit Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root{ --bg:#f4f6fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --brand:#5b5ee1; --shadow:0 8px 24px rgba(16,24,40,.08); --radius:16px; }
+    *{ box-sizing:border-box }
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial; padding-bottom:80px; -webkit-tap-highlight-color:transparent; }
+    .header{ position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--line); padding:14px 16px; display:flex; align-items:center; gap:10px; }
+    .header a{ color:var(--text); text-decoration:none; font-size:18px; }
+    .header h2{ margin:0 auto; font-size:20px; font-weight:800; text-align:center; }
+
+    .container{ max-width:780px; margin:0 auto; padding:16px; }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-bottom:16px; }
+    .row{ display:grid; grid-template-columns: 1fr; gap:6px; margin-bottom:12px; }
+    label{ font-size:12px; color:var(--muted); }
+    input[type="text"], input[type="email"], input[type="tel"], input[type="url"]{
+      width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-size:14px; outline:none; background:#fff;
+    }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 12px; border-radius:12px; border:1px solid transparent; text-decoration:none; font-weight:800; font-size:13px; cursor:pointer; }
+    .btn-primary{ background:var(--brand); color:#fff; }
+    .btn-secondary{ background:#fff; color:var(--brand); border-color:var(--brand); }
+
+    .alert{ padding:10px 12px; border-radius:12px; margin-bottom:12px; }
+    .alert-ok{ background:#ecfdf5; border:1px solid #befce5; color:#065f46; }
+    .alert-warn{ background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; }
+
+    .footer-nav{ position:fixed; left:0; right:0; bottom:0; height:64px; background:#fff; border-top:1px solid var(--line); display:flex; align-items:center; justify-content:space-around; z-index:20; }
+    .footer-nav a{ text-decoration:none; color:var(--text); font-size:12px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .footer-nav a.active{ color:var(--brand); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="profile.cfm" aria-label="Back"><i class="fa-solid fa-arrow-left"></i></a>
+  <h2>Edit Profile</h2>
+</div>
+
+<div class="container">
+
+  <!-- Alerts -->
+  <cfif structKeyExists(variables,"saveMsg") AND len(saveMsg)>
+    <div class="alert <cfoutput>#savedOK ? 'alert-ok' : 'alert-warn'#</cfoutput>">
+      <cfoutput>#encodeForHTML(saveMsg)#</cfoutput>
+    </div>
+  </cfif>
+
+  <div class="card">
+    <form method="post" action="profile_edit.cfm" onsubmit="return validateForm()">
+      <div class="row">
+        <label for="fullName">Full Name</label>
+        <input id="fullName" name="fullName" type="text" value="<cfoutput>#encodeForHTMLAttribute(curName)#</cfoutput>" required>
+      </div>
+      <div class="row">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" value="<cfoutput>#encodeForHTMLAttribute(curEmail)#</cfoutput>" placeholder="you@example.com">
+      </div>
+      <div class="row">
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" type="tel" value="<cfoutput>#encodeForHTMLAttribute(curPhone)#</cfoutput>" placeholder="+91 98765 43210">
+      </div>
+      <div class="row">
+        <label for="avatarURL">Avatar URL (optional)</label>
+        <input id="avatarURL" name="avatarURL" type="url" value="<cfoutput>#encodeForHTMLAttribute(curAvatar)#</cfoutput>" placeholder="https://.../me.jpg">
+      </div>
+
+      <div class="actions">
+        <button type="submit" name="doSave" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> Save Changes</button>
+        <a href="profile.cfm" class="btn btn-secondary"><i class="fa-solid fa-user"></i> Cancel</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<!-- Bottom Navbar -->
+<nav class="footer-nav" aria-label="Bottom navigation">
+  <a href="dashboard.cfm"><i class="fa-solid fa-house"></i><span>Home</span></a>
+  <a href="orderHistory.cfm"><i class="fa-solid fa-clipboard-list"></i><span>History</span></a>
+  <a href="profile.cfm" class="active"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+</nav>
+
+<script>
+  function validateForm(){
+    const name = document.getElementById('fullName').value.trim();
+    const email= document.getElementById('email').value.trim();
+    const phone= document.getElementById('phone').value.trim();
+    if(!name){ alert('Name is required'); return false; }
+    if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert('Enter a valid email'); return false; }
+    if(phone && !/^[0-9+\-\s()]{7,}$/.test(phone)){ alert('Enter a valid phone'); return false; }
+    return true;
+  }
+</script>
+
+</body>
+</html>

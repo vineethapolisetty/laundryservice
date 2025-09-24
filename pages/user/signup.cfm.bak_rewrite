@@ -1,0 +1,89 @@
+<!--- /laundryservice/pages/user/signup.cfm --->
+<cfif structKeyExists(session, "userID")>
+  <cflocation url="dashboard.cfm" addtoken="false">
+</cfif>
+
+<cfset err = "">
+<cfif structKeyExists(form, "fullname")>
+  <cftry>
+    <cfset userService = createObject("component","components.UserService")>
+    <!-- Basic server validation -->
+    <cfif NOT len(trim(form.fullname)) OR NOT len(trim(form.email)) OR NOT len(trim(form.password))>
+      <cfset err = "Please fill all required fields.">
+    <cfelse>
+      <!-- Create user -->
+      <cfset userService.signup(
+        fullname = trim(form.fullname),
+        phone    = trim(form.phone),
+        email    = trim(form.email),
+        password = trim(form.password),
+        address  = trim(form.address)
+      )>
+      <!-- fetch ID and log in -->
+      <cfset newID = userService.getUserIDByPhone(trim(form.phone))>
+      <cfif len(newID)>
+        <cfset session.userID   = newID>
+        <cfset session.userName = trim(form.fullname)>
+        <cfset session.userid   = session.userID> <!-- mirror -->
+        <cflocation url="dashboard.cfm" addtoken="false">
+      <cfelse>
+        <cfset err = "Could not create account.">
+      </cfif>
+    </cfif>
+    <cfcatch>
+      <cfset err = "Signup failed: #encodeForHTML(cfcatch.message)#">
+    </cfcatch>
+  </cftry>
+</cfif>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Create account - LaundryLink</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg">
+    <h1 class="text-2xl font-bold mb-2">Create your account</h1>
+    <p class="text-gray-500 mb-6">Join LaundryLink in a minute.</p>
+
+    <cfif len(err)>
+      <div class="mb-4 rounded border border-red-200 bg-red-50 text-red-700 p-3">
+        <cfoutput>#err#</cfoutput>
+      </div>
+    </cfif>
+
+    <form method="post" action="signup.cfm" class="grid gap-4">
+      <div>
+        <label class="text-sm font-medium">Full Name</label>
+        <input name="fullname" class="w-full mt-1 border rounded-lg p-2" required>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium">Phone</label>
+          <input name="phone" class="w-full mt-1 border rounded-lg p-2" required>
+        </div>
+        <div>
+          <label class="text-sm font-medium">Email</label>
+          <input type="email" name="email" class="w-full mt-1 border rounded-lg p-2" required>
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-medium">Password</label>
+        <input type="password" name="password" class="w-full mt-1 border rounded-lg p-2" required>
+      </div>
+      <div>
+        <label class="text-sm font-medium">Address</label>
+        <input name="address" class="w-full mt-1 border rounded-lg p-2" required>
+      </div>
+      <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg">Create Account</button>
+    </form>
+
+    <p class="text-sm text-gray-500 mt-6">
+      Already have an account? <a href="login.cfm" class="text-indigo-600 hover:underline">Sign in</a>
+    </p>
+  </div>
+</body>
+</html>

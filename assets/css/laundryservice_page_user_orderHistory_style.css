@@ -1,0 +1,90 @@
+/* Styles extracted for laundryservice/pages/user/orderHistory.cfm */
+:root{
+      --bg:#f4f6fb;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --brand:#5b5ee1;
+      --ok:#22c55e;
+      --info:#3b82f6;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --shadow: 0 8px 24px rgba(16,24,40,.08);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial; padding-bottom:80px; }
+
+    .container{ max-width:780px; margin:0 auto; padding:12px 16px 24px; }
+    .header{
+      position:sticky; top:0; z-index:10; background:linear-gradient(to bottom, rgba(244,246,251,1), rgba(244,246,251,.7) 60%, rgba(244,246,251,0));
+      backdrop-filter:saturate(160%) blur(4px);
+      padding:14px 0 8px; margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .header a{ color:var(--text); text-decoration:none; font-size:18px; display:inline-flex; align-items:center; }
+    .header h2{ margin:0 auto; font-size:22px; font-weight:800; text-align:center; }
+
+    .controls{
+      display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 14px;
+    }
+    .controls .field{
+      flex:1 1 220px; background:var(--card); border:1px solid var(--line); border-radius:12px; display:flex; align-items:center; gap:8px; padding:8px 10px; box-shadow:var(--shadow);
+    }
+    .controls input, .controls select{
+      width:100%; border:none; outline:none; background:transparent; font-size:14px; color:var(--text);
+    }
+
+    .summary{
+      display:flex; gap:12px; flex-wrap:wrap; margin:6px 0 10px;
+    }
+    .pill{
+      background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:12px; color:var(--muted); box-shadow:var(--shadow);
+    }
+
+    .order-card{
+      background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:14px; box-shadow:var(--shadow);
+    }
+    .order-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .order-header h4{ margin:0; font-size:16px; font-weight:800; }
+    .status-badge{
+      padding:6px 10px; border-radius:999px; font-size:11px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:.4px;
+    }
+    .completed{ background:var(--ok); }
+    .processing{ background:var(--info); }
+    .cancelled{ background:var(--danger); }
+    .active{ background:#6c757d; }
+
+    .order-details{ margin-top:10px; color:var(--text); font-size:14px; display:grid; gap:6px; }
+    .order-details i{ width:18px; text-align:center; color:var(--muted); margin-right:8px; }
+    .row{ display:flex; align-items:center; }
+
+    .order-price{ margin-top:10px; font-weight:800; color:var(--text); }
+    .order-actions{ display:flex; gap:10px; margin-top:12px; }
+    .btn{
+      flex:1; padding:10px 12px; border-radius:12px; border:1px solid transparent; cursor:pointer; font-weight:800; font-size:13px;
+      display:inline-flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;
+    }
+    .btn-primary{ background:var(--brand); color:#fff; }
+    .btn-secondary{ background:#ffffff; color:var(--brand); border-color:var(--brand); }
+
+    .empty{
+      text-align:center; color:var(--muted); background:var(--card); border:1px dashed var(--line); border-radius:var(--radius);
+      padding:24px; box-shadow:var(--shadow); margin-top:10px;
+    }
+
+    .footer-nav{
+      position:fixed; left:0; right:0; bottom:0; height:64px; background:#ffffff; border-top:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-around; z-index:20;
+    }
+    .footer-nav a{ text-decoration:none; color:var(--text); font-size:12px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .footer-nav a.active{ color:var(--brand); }
+
+    /* Legacy links—kept but subtle */
+    .legacy-links{ margin:20px auto 8px; max-width:780px; padding:0 16px; }
+    .legacy-links ul{ display:flex; flex-wrap:wrap; gap:8px; list-style:none; padding:0; margin:0; }
+    .legacy-links a{ font-size:12px; color:var(--muted); text-decoration:none; padding:6px 10px; border:1px dashed var(--line); border-radius:999px; }
+
+.page-orderHistory-style { text-align:center; margin: 8px 0 90px; }
+
+.page-orderHistory-style { border-radius:12px; padding:10px 16px; }

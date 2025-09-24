@@ -1,0 +1,27 @@
+<cfif NOT structKeyExists(session, "userid")>
+  <cflocation url="login.cfm">
+</cfif>
+
+<cfparam name="url.orderId" default="">
+
+<cfif NOT len(trim(url.orderId))>
+  <cflocation url="orderHistory.cfm">
+</cfif>
+
+<cfset orderService = createObject("component", "components.OrderService")>
+
+<cftry>
+  <!--- Call cancelOrder function --->
+  <cfset orderService.cancelOrder(url.orderId, session.userid)>
+
+  <!--- Redirect back to details or history --->
+  <cflocation url="orderDetails.cfm?orderId=#url.orderId#">
+
+  <cfcatch type="any">
+    <cfoutput>
+      <h2 style="color:red;">Error cancelling order</h2>
+      <p>#cfcatch.message#</p>
+      <p><a href="orderHistory.cfm">Back to Orders</a></p>
+    </cfoutput>
+  </cfcatch>
+</cftry>

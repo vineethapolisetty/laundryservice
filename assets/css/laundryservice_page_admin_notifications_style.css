@@ -1,0 +1,6 @@
+/* Styles extracted for laundryservice/pages/admin/notifications.cfm */
+/* highlight animation */
+    .new-highlight {
+      background-color: #fff3cd !important;
+      transition: background-color 2s ease;
+    }

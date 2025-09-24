@@ -1,0 +1,70 @@
+<!-- layouts/agentLayout.cfm -->
+<cfif NOT structKeyExists(session, "agentid")>
+  <cflocation url="/laundryservice/index.cfm?fuse=admin_login" addtoken="false">
+</cfif>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Agent Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+  <!-- Sidebar -->
+  <div class="hidden md:block w-64 bg-white h-screen fixed left-0 top-0 shadow">
+    <div class="p-6 font-bold text-xl border-b">Agent Panel</div>
+    <ul class="space-y-4 p-6">
+      <li><a href="/laundryservice/index.cfm?fuse=agent_dashboard" class="text-blue-600 font-semibold">Dashboard</a></li>
+      <li><a href="/laundryservice/index.cfm?fuse=agent_orders" class="text-gray-700 hover:text-blue-600">Orders</a></li>
+      <!-- ADDED: Tracker in desktop sidebar -->
+      <li><a href="/laundryservice/index.cfm?fuse=agent_tracker" class="text-gray-700 hover:text-blue-600">Tracker</a></li>
+      <!-- /ADDED -->
+      <li><a href="/laundryservice/index.cfm?fuse=agent_profile" class="text-gray-700 hover:text-blue-600">My Profile</a></li>
+      <li><a href="/laundryservice/index.cfm?fuse=agent_logout" class="text-red-500 hover:underline">Logout</a></li>
+    </ul>
+  </div>
+
+  <!-- Topbar -->
+  <header class="bg-white p-4 shadow flex items-center justify-between md:ml-64">
+    <div class="flex items-center space-x-4">
+      <button id="menuButton" class="md:hidden">
+        <i class="ph ph-list text-2xl"></i>
+      </button>
+      <h1 class="text-xl font-bold">Welcome, <cfoutput>#session.agentname#</cfoutput></h1>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="md:ml-64 p-6">
+    <cfoutput>#content#</cfoutput>
+  </main>
+
+  <!-- Mobile Menu -->
+  <div id="mobileMenu" class="md:hidden fixed top-0 left-0 w-2/3 h-full bg-white shadow-lg transform -translate-x-full transition-transform duration-300 z-50">
+    <div class="p-6 font-bold text-xl border-b">Menu</div>
+    <!-- Sidebar Navigation -->
+    <ul class="space-y-4 p-6">
+      <li><a href="/laundryservice/index.cfm?fuse=agent_dashboard" class="text-blue-600 font-semibold">Dashboard</a></li>
+      <li><a href="/laundryservice/index.cfm?fuse=agent_orders" class="text-gray-700 hover:text-blue-600">Orders</a></li>
+      <li><a href="/laundryservice/index.cfm?fuse=agent_tracker" class="text-gray-700 hover:text-blue-600">Tracker</a></li>
+      <li><a href="/laundryservice/index.cfm?fuse=agent_profile" class="text-gray-700 hover:text-blue-600">My Profile</a></li>
+      <li><a href="/laundryservice/index.cfm?fuse=agent_logout" class="text-red-500 hover:underline">Logout</a></li>
+    </ul>
+  </div>
+
+  <!-- JS for Menu Toggle -->
+  <script>
+    const menuBtn = document.getElementById('menuButton');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('-translate-x-full');
+      });
+    }
+  </script>
+</body>
+</html>

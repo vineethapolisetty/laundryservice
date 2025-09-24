@@ -1,0 +1,241 @@
+<cfif NOT structKeyExists(session, "adminid")>
+    <cflocation url="login.cfm" addtoken="no">
+</cfif>
+
+<!-- Load Data -->
+<cfobject component="components.AdminService" name="adminService">
+<cfset agents = adminService.getAgents()>
+<cfset regions = adminService.getRegions()>
+
+<!-- ===== Counts ===== -->
+<cfset totalAgents = agents.recordCount>
+<cfset activeAgents = 0>
+<cfset pendingApprovals = 0>
+<cfloop query="agents">
+    <cfif Status EQ "Active">
+        <cfset activeAgents++>
+    <cfelseif Status EQ "Pending">
+        <cfset pendingApprovals++>
+    </cfif>
+</cfloop>
+<cfset inactiveAgents = totalAgents - activeAgents - pendingApprovals>
+
+<!-- ===== Orders Completed by Month ===== -->
+<cfquery name="agentTasks" datasource="laundryservice">
+    SELECT 
+        MONTHNAME(EstimatedDeliveryDate) AS MonthName, 
+        COUNT(*) AS TaskCount,
+        MONTH(EstimatedDeliveryDate) AS MonthNumber
+    FROM Orders
+    WHERE Status = 'Delivered'
+      AND EstimatedDeliveryDate IS NOT NULL
+    GROUP BY MonthNumber, MonthName
+    ORDER BY MonthNumber
+</cfquery>
+
+
+
+<!-- ===== Handle Region Actions ===== -->
+<cfif structKeyExists(form, "actionType")>
+    <cfif form.actionType EQ "add">
+        <cfquery datasource="laundryservice">
+            INSERT INTO Regions (RegionName)
+            VALUES (<cfqueryparam value="#form.regionName#" cfsqltype="cf_sql_varchar">)
+        </cfquery>
+        <cflocation url="regions.cfm?message=Region added successfully" addtoken="no">
+
+    <cfelseif form.actionType EQ "edit">
+        <cfquery datasource="laundryservice">
+            UPDATE Regions
+            SET RegionName = <cfqueryparam value="#form.regionName#" cfsqltype="cf_sql_varchar">
+            WHERE RegionID = <cfqueryparam value="#form.regionID#" cfsqltype="cf_sql_integer">
+        </cfquery>
+        <cflocation url="regions.cfm?message=Region updated successfully" addtoken="no">
+    </cfif>
+<cfelseif structKeyExists(url, "delete")>
+    <cfquery datasource="laundryservice">
+        DELETE FROM Regions
+        WHERE RegionID = <cfqueryparam value="#url.delete#" cfsqltype="cf_sql_integer">
+    </cfquery>
+    <cflocation url="regions.cfm?message=Region deleted successfully" addtoken="no">
+</cfif>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Regions & Agents Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f5f6fa; }
+        .card-stat { text-align: center; padding: 1rem; border-radius: 12px; }
+        .card-stat h4 { margin: 0; font-weight: bold; }
+        .table th, .table td { vertical-align: middle; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-2 bg-dark text-white p-4 min-vh-100">
+            <h4 class="text-center">Admin</h4>
+            <ul class="nav flex-column mt-4">
+                <li class="nav-item"><a class="nav-link text-white" href="dashboard.cfm">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link text-white active" href="regions.cfm">Regions</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="stores.cfm">Stores</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="agents.cfm">Agents</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="admin_orders.cfm">Orders</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="notifications.cfm">Notifications</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="reports.cfm">Reports</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="settings.cfm">Settings</a></li>
+                <li class="nav-item"><a class="nav-link text-danger" href="logout.cfm">Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10 p-4">
+
+            <!-- Alerts -->
+            <cfif structKeyExists(url, "message")>
+                <div class="alert alert-success"><cfoutput>#url.message#</cfoutput></div>
+            </cfif>
+            <cfif structKeyExists(url, "error")>
+                <div class="alert alert-danger"><cfoutput>#url.error#</cfoutput></div>
+            </cfif>
+
+            <!-- Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3"><div class="card-stat bg-primary text-white"><h4><cfoutput>#totalAgents#</cfoutput></h4><small>Total Agents</small></div></div>
+                <div class="col-md-3"><div class="card-stat bg-success text-white"><h4><cfoutput>#activeAgents#</cfoutput></h4><small>Active Agents</small></div></div>
+                <div class="col-md-3"><div class="card-stat bg-secondary text-white"><h4><cfoutput>#inactiveAgents#</cfoutput></h4><small>Inactive Agents</small></div></div>
+                <div class="col-md-3"><div class="card-stat bg-warning text-dark"><h4><cfoutput>#pendingApprovals#</cfoutput></h4><small>Pending Approvals</small></div></div>
+            </div>
+            
+            <!-- Add Agent Form -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+      <strong>Add New Agent</strong>
+      <p>Fill in the details to add a new agent to your system</p>
+    </div>
+    <div class="card-body">
+      <form method="post" action="agents.cfm">
+        <div class="row g-3">
+          <div class="col-md-3"><input type="text" name="fullname" class="form-control" placeholder="Full Name" required></div>
+          <div class="col-md-3"><input type="email" name="email" class="form-control" placeholder="Email" required></div>
+          <div class="col-md-2"><input type="text" name="phone" class="form-control" placeholder="Phone" required></div>
+          <div class="col-md-2">
+            <select name="status" class="form-select">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Add Agent</button></div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+            <!-- Agents Table -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light"><strong>Agent Directory</strong></div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Joined</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <cfoutput query="agents">
+                            <tr>
+                                <td>#AgentID#</td>
+                                <td>#FullName#</td>
+                                <td>#Email#</td>
+                                <td>#Phone#</td>
+                                <td>
+                                    <cfif Status EQ "Active"><span class="badge bg-success">Active</span>
+                                    <cfelseif Status EQ "Pending"><span class="badge bg-warning text-dark">Pending</span>
+                                    <cfelse><span class="badge bg-secondary">Inactive</span></cfif>
+                                </td>
+                                <td>#dateFormat(CreatedAt, "dd-mmm-yyyy")#</td>
+                            </tr>
+                        </cfoutput>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Region Management -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light"><strong>Manage Regions</strong></div>
+                <div class="card-body">
+                    <!-- Add Region -->
+                    <form method="post" class="mb-3">
+                        <input type="hidden" name="actionType" value="add">
+                        <div class="input-group">
+                            <input type="text" name="regionName" class="form-control" placeholder="Enter new region" required>
+                            <button type="submit" class="btn btn-primary">Add Region</button>
+                        </div>
+                    </form>
+
+                    <!-- Regions Table -->
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                        <tr><th>ID</th><th>Region Name</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                        <cfoutput query="regions">
+                            <tr>
+                                <td>#RegionID#</td>
+                                <td>
+                                    <form method="post" class="d-inline">
+                                        <input type="hidden" name="actionType" value="edit">
+                                        <input type="hidden" name="regionID" value="#RegionID#">
+                                        <input type="text" name="regionName" value="#RegionName#" class="form-control d-inline-block w-auto" required>
+                                        <button type="submit" class="btn btn-sm btn-warning">Update</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <a href="regions.cfm?delete=#RegionID#" class="btn btn-sm btn-danger" onclick="return confirm('Delete this region?')">Delete</a>
+                                </td>
+                            </tr>
+                        </cfoutput>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header bg-light"><strong>Agent Task Completion Overview</strong></div>
+                <div class="card-body">
+                    <canvas id="agentChart" height="100"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Chart JS -->
+<script>
+const labels = [<cfoutput query="agentTasks">"#MonthName#"<cfif CurrentRow LT RecordCount>,</cfif></cfoutput>];
+const dataValues = [<cfoutput query="agentTasks">#TaskCount#<cfif CurrentRow LT RecordCount>,</cfif></cfoutput>];
+new Chart(document.getElementById('agentChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Tasks Completed',
+            data: dataValues,
+            backgroundColor: '#0d6efd'
+        }]
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,149 @@
+<cfif NOT structKeyExists(session, "adminid")>
+  <cflocation url="login.cfm" addtoken="no">
+</cfif>
+
+<cfobject component="components.AdminService" name="adminService">
+
+<!-- ✅ If this is an Ajax call, just return the table -->
+<cfif structKeyExists(url, "ajax")>
+  <cfset notifications = adminService.getNotifications()>
+  <table class="table table-striped table-hover">
+    <thead class="table-dark">
+      <tr>
+        <th>ID</th>
+        <th>Message</th>
+        <th>User</th>
+        <th>Order ID</th>
+        <th>Status</th>
+        <th>Sent At</th>
+      </tr>
+    </thead>
+    <tbody>
+      <cfoutput query="notifications">
+        <tr data-id="#NotificationID#">
+          <td>#NotificationID#</td>
+          <td>#Message#</td>
+          <td>#FullName#</td>
+          <td>#OrderID#</td>
+          <td>
+            <cfif IsRead>
+              <span class="badge bg-success">Read</span>
+            <cfelse>
+              <span class="badge bg-warning text-dark">Unread</span>
+            </cfif>
+          </td>
+          <td>#dateFormat(SentAt, "dd-mmm-yyyy")#</td>
+        </tr>
+      </cfoutput>
+    </tbody>
+  </table>
+  <cfabort>
+</cfif>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Notifications</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    /* highlight animation */
+    .new-highlight {
+      background-color: #fff3cd !important;
+      transition: background-color 2s ease;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-md-2 bg-dark text-white p-4 min-vh-100">
+        <h4 class="text-center">Admin</h4>
+        <ul class="nav flex-column mt-4">
+          <li class="nav-item"><a class="nav-link text-white" href="dashboard.cfm">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link text-white" href="regions.cfm">Regions</a></li>
+          <li class="nav-item"><a class="nav-link text-white" href="stores.cfm">Stores</a></li>
+          <li class="nav-item"><a class="nav-link text-white" href="agents.cfm">Agents</a></li>
+          <li class="nav-item"><a class="nav-link text-white" href="admin_orders.cfm">Orders</a></li>
+          <li class="nav-item"><a class="nav-link text-white active" href="notifications.cfm">Notifications</a></li>
+          <li class="nav-item"><a class="nav-link text-white" href="reports.cfm">Reports</a></li>
+          <li class="nav-item"><a class="nav-link text-white" href="settings.cfm">Settings</a></li>
+          <li class="nav-item"><a class="nav-link text-danger" href="logout.cfm">Logout</a></li>
+        </ul>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-md-10 p-4">
+        <h2 class="mb-4">User Notifications</h2>
+
+        <div id="notificationsTable">
+          <!-- First load -->
+          <cfset notifications = adminService.getNotifications()>
+          <table class="table table-striped table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Message</th>
+                <th>User</th>
+                <th>Order ID</th>
+                <th>Status</th>
+                <th>Sent At</th>
+              </tr>
+            </thead>
+            <tbody>
+              <cfoutput query="notifications">
+                <tr data-id="#NotificationID#">
+                  <td>#NotificationID#</td>
+                  <td>#Message#</td>
+                  <td>#FullName#</td>
+                  <td>#OrderID#</td>
+                  <td>
+                    <cfif IsRead>
+                      <span class="badge bg-success">Read</span>
+                    <cfelse>
+                      <span class="badge bg-warning text-dark">Unread</span>
+                    </cfif>
+                  </td>
+                  <td>#dateFormat(SentAt, "dd-mmm-yyyy")#</td>
+                </tr>
+              </cfoutput>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function refreshNotifications() {
+      $.ajax({
+        url: "notifications.cfm?ajax=1",  
+        success: function (data) {
+          let oldIds = $("#notificationsTable tr[data-id]").map(function () {
+            return $(this).data("id");
+          }).get();
+
+          $("#notificationsTable").html(data);
+
+          // highlight new rows
+          $("#notificationsTable tr[data-id]").each(function () {
+            let id = $(this).data("id");
+            if (oldIds.indexOf(id) === -1) {
+              $(this).addClass("new-highlight");
+              setTimeout(() => $(this).removeClass("new-highlight"), 2000);
+            }
+          });
+        }
+      });
+    }
+
+    // Auto-refresh every 5 seconds
+    setInterval(refreshNotifications, 5000);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

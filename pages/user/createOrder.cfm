@@ -1,0 +1,38 @@
+<cfif NOT structKeyExists(session, "userid")>
+  <cflocation url="/laundryservice/index.cfm?fuse=login">
+</cfif>
+
+<cftry>
+  <!-- Load the OrderService component -->
+  <cfset orderService = createObject("component", "components.OrderService")>
+
+  <!--- Ensure form.deliveryAddress is safely set --->
+  <cfif structKeyExists(form, "deliveryAddress") AND len(trim(form.deliveryAddress)) GT 0>
+    <cfset deliveryAddress = trim(form.deliveryAddress)>
+  <cfelse>
+    <cfset deliveryAddress = "N/A">
+  </cfif>
+
+  <cfif NOT structKeyExists(form, "towel")>
+    <cfset form.towel = 0>
+  </cfif>
+
+  <!-- Call order creation logic -->
+  <cfset orderService.createOrder(
+    session.userid,
+    form.dropType,
+    deliveryAddress,
+    duplicate(form)
+  )>
+
+  <!-- Redirect to order tracking -->
+  <cflocation url="/laundryservice/index.cfm?fuse=orderstatus">
+
+  <!-- Catch any runtime errors -->
+  <cfcatch type="any">
+    <div style="color:red;">
+      <strong>❌ Error:</strong>
+      <cfoutput>#cfcatch.message#</cfoutput>
+    </div>
+  </cfcatch>
+</cftry>

@@ -1,0 +1,121 @@
+/* Extracted styles from laundryservice/pages/user/dashboard.cfm */
+
+:root{
+  --primary:#5b5ee1;
+  --bg:#f7f7fb;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --shadow:0 8px 24px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background:linear-gradient(180deg,#fafaff 0%, #f4f6fb 100%);
+  color:var(--text); display:flex; min-height:100vh;
+}
+
+/* Sidebar */
+.sidebar{
+  width:260px; background:var(--card); border-right:1px solid var(--border);
+  position:fixed; inset:0 auto 0 0; padding:24px; box-shadow:var(--shadow);
+  transition:transform .3s ease;
+}
+.sidebar.hidden{ transform:translateX(-100%); }
+.brand{
+  display:flex; align-items:center; gap:10px; margin-bottom:24px;
+}
+.brand .logo{
+  height:40px; width:40px; border-radius:12px; display:grid; place-items:center;
+  background:radial-gradient(120px 60px at 20% 20%, #7c7fee, #5356e1);
+  color:#fff; font-weight:800;
+  box-shadow:0 6px 16px rgba(91,94,225,.35);
+}
+.nav a{
+  display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text);
+  padding:10px 12px; border-radius:10px; transition:all .15s ease; margin:4px 0;
+}
+.nav a:hover{ background:#f2f4ff; color:var(--primary); transform:translateX(2px); }
+.logout{
+  display:inline-flex; align-items:center; gap:8px; background:#ef4444; color:#fff !important;
+  padding:9px 12px; border-radius:10px; text-decoration:none; margin-top:10px; box-shadow:0 6px 16px rgba(239,68,68,.25);
+}
+
+/* Main */
+.main{ margin-left:260px; width:calc(100% - 260px); padding:28px; transition:margin-left .3s ease; }
+.main.full{ margin-left:0; width:100%; }
+.topbar{
+  background:var(--card); border:1px solid var(--border); border-radius:16px; padding:12px 16px;
+  display:flex; align-items:center; justify-content:space-between; box-shadow:var(--shadow);
+}
+.left{ display:flex; align-items:center; gap:12px; }
+.toggle-btn{
+  height:40px; width:40px; display:grid; place-items:center; border:none; background:#eef1ff;
+  border-radius:12px; color:var(--primary); font-size:20px; cursor:pointer; transition:transform .1s;
+}
+.toggle-btn:active{ transform:scale(.97); }
+
+/* Cards / KPIs */
+.grid{ display:grid; gap:16px; }
+.grid-4{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px;
+  box-shadow:var(--shadow);
+}
+.kpi{
+  display:flex; align-items:center; gap:12px; color:#fff; border-radius:16px; padding:18px; box-shadow:var(--shadow);
+}
+.kpi .icon{
+  height:44px; width:44px; border-radius:12px; display:grid; place-items:center;
+  background:rgba(255,255,255,.22); font-size:20px;
+}
+.kpi .meta{ line-height:1.1; }
+.kpi .label{ font-size:12px; opacity:.95; }
+.kpi .value{ font-size:28px; font-weight:800; letter-spacing:.3px; }
+
+.kpi-1{ background:linear-gradient(135deg,#6c70f0,#5b5ee1); }
+.kpi-2{ background:linear-gradient(135deg,#22c55e,#16a34a); }
+.kpi-3{ background:linear-gradient(135deg,#f59e0b,#f97316); }
+.kpi-4{ background:linear-gradient(135deg,#64748b,#475569); }
+
+/* Loader */
+.loader{ display:flex; align-items:center; gap:8px; color:var(--muted); }
+.spinner{
+  width:14px; height:14px; border:2px solid #cbd5e1; border-top-color:var(--primary); border-radius:50%;
+  display:inline-block; animation:spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Responsive */
+@media (max-width: 900px){
+  .sidebar{ transform:translateX(-100%); }
+  .sidebar.show{ transform:translateX(0); }
+  .main{ margin-left:0; width:100%; padding:18px; }
+  .grid-4{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 520px){
+  .grid-4{ grid-template-columns:1fr; }
+}
+
+/* Keep logout on the right inside the topbar */
+.topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; }
+.topbar .left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.topbar .logout { margin-left: auto; }
+
+/* Per-element mappings (from extraction) */
+#laundryservice_pages_user_dashboard_cfm-auto-1 { font-weight:800; }
+#laundryservice_pages_user_dashboard_cfm-auto-2 { font-size:12px; color:var(--muted); }
+#laundryservice_pages_user_dashboard_cfm-auto-3 { font-weight:700; }
+#laundryservice_pages_user_dashboard_cfm-auto-4 { font-size:12px; color:var(--muted); }
+#laundryservice_pages_user_dashboard_cfm-auto-5 { box-shadow:none; }
+#laundryservice_pages_user_dashboard_cfm-auto-6 { margin-top:18px; }
+#laundryservice_pages_user_dashboard_cfm-auto-7 { margin-top:16px; }
+#laundryservice_pages_user_dashboard_cfm-auto-8 { margin:0 0 8px; }
+#laundryservice_pages_user_dashboard_cfm-auto-9 { margin:0; }
+#laundryservice_pages_user_dashboard_cfm-auto-10 { color:var(--primary); font-weight:600; text-decoration:none; }
+#laundryservice_pages_user_dashboard_cfm-auto-11 { margin:0 0 10px; }
+#recentList { margin:10px 0 0; padding-left:18px; }
+
+/* small helper to avoid overflow */
+.main img, .main table { max-width:100%; height:auto; }

@@ -1,0 +1,40 @@
+<!--- /laundryservice/pages/user/email_login.cfm --->
+<cfset message = "">
+<cfif structKeyExists(form, "email")>
+  <cfset ml = createObject("component","components.MagicLinkService").createAndEmailLink(form.email)>
+  <cfset message = ml.message>
+</cfif>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Email Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-2">Email sign-in link</h1>
+    <p class="text-gray-500 mb-6">Enter your account email. We’ll send a one-time sign-in link.</p>
+
+    <cfif len(message)>
+      <div class="mb-4 rounded border p-3 text-sm <cfoutput>#iif(ml.ok, de('border-green-200 bg-green-50 text-green-700'), de('border-red-200 bg-red-50 text-red-700'))#</cfoutput>">
+        <cfoutput>#encodeForHTML(message)#</cfoutput>
+      </div>
+    </cfif>
+
+    <form method="post" action="/laundryservice/index.cfm?fuse=email_login" class="space-y-4">
+      <div>
+        <label class="text-sm font-medium">Email</label>
+        <input type="email" name="email" class="w-full mt-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-400" placeholder="you@example.com" required>
+      </div>
+      <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg">Send sign-in link</button>
+    </form>
+
+    <div class="mt-6 text-sm text-gray-500">
+      <a href="/laundryservice/index.cfm?fuse=login" class="text-indigo-600 hover:underline">Back to Login</a>
+    </div>
+  </div>
+</body>
+</html>

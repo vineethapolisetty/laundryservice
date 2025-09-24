@@ -1,0 +1,69 @@
+<cfif NOT structKeyExists(session, "agentid")>
+  <cflocation url="login.cfm">
+</cfif>
+
+<cfif structKeyExists(form, "submit")>
+  <!-- Upload to a temp folder inside /laundryservice/uploads/temp -->
+  <cfset tempDir = expandPath("/laundryservice/uploads/temp")>
+  <cfif NOT directoryExists(tempDir)>
+    <cfdirectory action="create" directory="#tempDir#">
+  </cfif>
+
+  <cffile 
+    action="upload" 
+    filefield="profilePhoto" 
+    destination="#tempDir#" 
+    nameconflict="makeunique">
+
+  <!-- Load uploaded image -->
+  <cfset uploadedFile = tempDir & "/" & cffile.serverFile>
+
+  <!-- Create target folder if not exists -->
+  <cfset targetDir = expandPath("/laundryservice/uploads/agents")>
+  <cfif NOT directoryExists(targetDir)>
+    <cfdirectory action="create" directory="#targetDir#">
+  </cfif>
+
+  <!-- Define permanent filename based on agent ID -->
+  <cfset newFile = targetDir & "/" & session.agentid & ".jpg">
+  <!-- This is what will be stored in DB for displaying in profile -->
+  <cfset relativePath = "/laundryservice/uploads/agents/" & session.agentid & ".jpg">
+
+  <!-- Resize the image (keep aspect ratio, max 300x300) -->
+  <cfimage source="#uploadedFile#" name="img">
+  <cfset ImageResize(img, 300, 300, "highestPerformance")>
+  <cfimage action="write" source="#img#" destination="#newFile#" overwrite="true">
+
+  <!-- Clean up temp file -->
+  <cffile action="delete" file="#uploadedFile#">
+
+  <!-- Save path in DB -->
+  <cfquery datasource="laundryservice">
+    UPDATE Agents
+    SET PhotoUrl = <cfqueryparam value="#relativePath#" cfsqltype="cf_sql_varchar">
+    WHERE AgentID = <cfqueryparam value="#session.agentid#" cfsqltype="cf_sql_integer">
+  </cfquery>
+
+  <!-- Redirect back -->
+  <cflocation url="profile.cfm">
+</cfif>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Profile Photo</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 p-6 font-sans">
+  <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow">
+    <h1 class="text-xl font-bold mb-4">Upload Profile Photo</h1>
+    <form method="post" enctype="multipart/form-data">
+      <input type="file" name="profilePhoto" accept="image/*" class="mb-4 block w-full border rounded p-2">
+      <button type="submit" name="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Upload & Resize
+      </button>
+    </form>
+  </div>
+</body>
+</html>

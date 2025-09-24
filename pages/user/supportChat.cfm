@@ -1,0 +1,82 @@
+<!--- /laundryservice/pages/user/supportChat.cfm --->
+
+<cfif NOT structKeyExists(session, "userid")>
+  <cflocation url="/laundryservice/index.cfm?fuse=admin_login">
+</cfif>
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Support Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #444;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #666;
+      margin: 10px 0 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #4338ca;
+    }
+
+    .info {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2><i class="fas fa-comments"></i> Support Chat</h2>
+    <p>Our live chat feature is coming soon </p>
+    <p>For now, please call us for immediate assistance:</p>
+    <a href="tel:+1800123456" class="btn"><i class="fas fa-phone"></i> Call Support</a>
+
+    <div class="info">
+      <p><a href="javascript:history.back()"> < Go Back</a></p>
+    </div>
+  </div>
+</body>
+</html>

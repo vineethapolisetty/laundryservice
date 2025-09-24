@@ -1,0 +1,183 @@
+<cfif NOT structKeyExists(session, "agentid")>  
+  <cflocation url="login.cfm">
+</cfif>
+
+<cfobject component="components.AgentService" name="agentService">
+<cfset orders  = agentService.getAssignedOrders(session.agentid)>
+<cfset profile = agentService.getProfile(session.agentid)>
+
+<!-- Count metrics -->
+<cfset pendingCount   = 0>
+<cfset todayCount     = 0>
+<cfset deliveredCount = 0>
+<cfset regionCounts   = { "North"=0, "East"=0, "West"=0, "South"=0 }>
+<cfset todayStr       = dateFormat(now(), "yyyy-mm-dd")>
+
+<cfloop query="orders">
+  <cfif Status EQ 'Pending Pickup' OR Status EQ 'Pending'><cfset pendingCount++></cfif>
+  <cfif Status EQ 'Delivered'><cfset deliveredCount++></cfif>
+  <cfif dateFormat(EstimatedDeliveryDate,"yyyy-mm-dd") EQ todayStr><cfset todayCount++></cfif>
+  <cfif structKeyExists(regionCounts, Region)><cfset regionCounts[Region]++></cfif>
+</cfloop>
+
+<!-- If ?ajax=1 return JSON -->
+<cfif structKeyExists(url,"ajax")>
+  <cfset data = {
+    pending       = pendingCount,
+    today         = todayCount,
+    delivered     = deliveredCount,
+    total         = orders.recordCount,
+    regionCounts  = regionCounts,
+    activities    = [],
+    notifications = []
+  }>
+
+  <cfloop query="orders" endrow="5">
+    <cfset arrayAppend(data.activities,{
+      OrderID   = OrderID,
+      Status    = Status,
+      UpdatedAt = LSDateFormat(UpdatedAt,"dd-mmm-yyyy")
+    })>
+  </cfloop>
+
+  <cfif isDefined("qNotifs") AND qNotifs.recordCount>
+    <cfloop query="qNotifs">
+      <cfset arrayAppend(data.notifications,{
+        Message   = Message,
+        CreatedAt = LSDateFormat(CreatedAt,"dd-mmm-yyyy HH:nn")
+      })>
+    </cfloop>
+  </cfif>
+
+  <cfoutput>#serializeJSON(data)#</cfoutput>
+  <cfabort>
+</cfif>
+
+<!-- Normal render -->
+<cfset content = "
+  <div class='flex items-center justify-between'>
+    <h1 class='text-2xl font-bold mb-4'>Welcome back, #encodeForHTML(session.agentname)#</h1>
+    <button id='dashRefresh' class='text-sm text-blue-600 hover:underline'>Refresh</button>
+  </div>
+
+  <div class='grid grid-cols-2 md:grid-cols-4 gap-4 mb-8'>
+    <div class='bg-blue-500 text-white p-4 rounded-2xl shadow'>
+      <h2 class='text-sm'>Pending Pickups</h2>
+      <p id='tilePending' class='text-3xl font-bold'>#pendingCount#</p>
+    </div>
+    <div class='bg-indigo-500 text-white p-4 rounded-2xl shadow'>
+      <h2 class='text-sm'>Upcoming Today</h2>
+      <p id='tileToday' class='text-3xl font-bold'>#todayCount#</p>
+    </div>
+    <div class='bg-green-500 text-white p-4 rounded-2xl shadow'>
+      <h2 class='text-sm'>Delivered</h2>
+      <p id='tileDelivered' class='text-3xl font-bold'>#deliveredCount#</p>
+    </div>
+    <div class='bg-yellow-500 text-white p-4 rounded-2xl shadow'>
+      <h2 class='text-sm'>Total Orders</h2>
+      <p id='tileTotal' class='text-3xl font-bold'>#orders.recordCount#</p>
+    </div>
+  </div>
+
+  <div class='bg-white rounded-2xl shadow-lg p-6 mb-6'>
+    <h2 class='text-xl font-semibold mb-4'>Orders by Region</h2>
+    <canvas id='ordersChart' height='100'></canvas>
+  </div>
+
+  <div class='bg-white p-6 rounded-2xl shadow mb-8'>
+    <h3 class='text-lg font-semibold mb-4'>Recent Activities</h3>
+    <ul id='activitiesList' class='space-y-3'>
+">
+
+<!-- Render activities -->
+<cfloop query="orders" endrow="5">
+  <cfset content &= "
+    <li class='flex items-center space-x-4'>
+      <i class='ph ph-truck text-indigo-500 text-xl'></i>
+      <div>
+        <p class='font-medium'>#encodeForHTML(OrderID)# - #encodeForHTML(Status)#</p>
+        <p class='text-sm text-gray-500'>Updated: #LSDateFormat(UpdatedAt, 'dd-mmm-yyyy')#</p>
+      </div>
+    </li>
+  ">
+</cfloop>
+
+<cfset content &= "</ul></div>">
+
+<!-- Urgent Tasks -->
+<cfset content &= "
+  <div class='bg-white p-6 rounded-2xl shadow mb-8'>
+    <h3 class='text-lg font-semibold mb-4'>Urgent Tasks</h3>
+    <ul class='grid grid-cols-2 gap-4'>
+      <li class='bg-red-100 p-3 rounded text-sm text-red-800'>Fulfill #pendingCount# pickups</li>
+      <li class='bg-green-100 p-3 rounded text-sm text-green-800'>Deliver #todayCount# orders today</li>
+      <li class='bg-yellow-100 p-3 rounded text-sm text-yellow-800'>0 payments to capture</li>
+      <li class='bg-pink-100 p-3 rounded text-sm text-pink-800'>0 chargebacks to review</li>
+    </ul>
+  </div>
+">
+
+<!-- Scripts (raw, not inside CF string) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('ordersChart').getContext('2d');
+  const chartData = {
+    labels: ['North','East','West','South'],
+    datasets: [{
+      label: 'Orders',
+      data: [#regionCounts['North']#,#regionCounts['East']#,#regionCounts['West']#,#regionCounts['South']#],
+      backgroundColor: ['#3b82f6','#6366f1','#10b981','#f59e0b']
+    }]
+  };
+  const ordersChart = new Chart(ctx,{ type:'bar', data: chartData,
+    options:{ responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true,ticks:{precision:0}}} }
+  });
+
+  const $pending   = document.getElementById('tilePending');
+  const $today     = document.getElementById('tileToday');
+  const $delivered = document.getElementById('tileDelivered');
+  const $total     = document.getElementById('tileTotal');
+  const $acts      = document.getElementById('activitiesList');
+  const $btn       = document.getElementById('dashRefresh');
+
+  function renderActivities(list){
+    $acts.innerHTML = '';
+    if(list.length === 0){
+      $acts.innerHTML = '<li class="text-gray-500 text-sm">No recent activity.</li>';
+      return;
+    }
+    list.forEach(a => {
+      const li = document.createElement('li');
+      li.className = 'flex items-center space-x-4';
+      li.innerHTML = `
+        <i class="ph ph-truck text-indigo-500 text-xl"></i>
+        <div>
+          <p class="font-medium">${a.OrderID} - ${a.Status}</p>
+          <p class="text-sm text-gray-500">Updated: ${a.UpdatedAt}</p>
+        </div>`;
+      $acts.appendChild(li);
+    });
+  }
+
+  async function refreshDashboard(){
+    try{
+      const res = await fetch('dashboard.cfm?ajax=1',{cache:'no-store'});
+      const data = await res.json();
+      $pending.textContent   = data.pending   ?? 0;
+      $today.textContent     = data.today     ?? 0;
+      $delivered.textContent = data.delivered ?? 0;
+      $total.textContent     = data.total     ?? 0;
+      if(data.regionCounts){
+        const rc = data.regionCounts;
+        ordersChart.data.datasets[0].data = [rc.North||0,rc.East||0,rc.West||0,rc.South||0];
+        ordersChart.update();
+      }
+      renderActivities(data.activities||[]);
+    }catch(e){}
+  }
+  if($btn){ $btn.addEventListener('click',refreshDashboard); }
+  setInterval(refreshDashboard,10000);
+</script>
+
+<!-- Layout include -->
+<cfinclude template="../../layouts/agentLayout.cfm">

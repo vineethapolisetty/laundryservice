@@ -1,0 +1,174 @@
+<cfif NOT structKeyExists(session, "agentid")>
+  <cflocation url="login.cfm">
+</cfif>
+
+<cfobject component="components.AgentService" name="agentService">
+
+<!-- Get today's string once -->
+<cfset todayStr = dateFormat(now(), "yyyy-mm-dd")>
+
+<!-- Load assigned orders -->
+<cfset orders = agentService.getAssignedOrders(session.agentid)>
+
+<!-- Compute today's counts -->
+<cfset pending = 0>
+<cfset inprogress = 0>
+<cfset ready = 0>
+<cfset delivered = 0>
+<cfset foundToday = false>
+
+<cfloop query="orders">
+  <cfif dateFormat(EstimatedDeliveryDate, "yyyy-mm-dd") EQ todayStr>
+    <cfset foundToday = true>
+    <cfif Status EQ "Pending Pickup" OR Status EQ "Pending"><cfset pending++></cfif>
+    <cfif Status EQ "In Progress" OR Status EQ "InProgress"><cfset inprogress++></cfif>
+    <cfif Status EQ "Ready for Delivery"><cfset ready++></cfif>
+    <cfif Status EQ "Delivered"><cfset delivered++></cfif>
+  </cfif>
+</cfloop>
+
+<!-- Save the tracker body HTML -->
+<cfsavecontent variable="trackerBody">
+  <cfoutput>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-blue-100 text-blue-800 p-4 rounded flex items-center justify-between">
+        <div>
+          <h3 class="text-xs md:text-sm opacity-80">Pending Pickup</h3>
+          <p class="text-2xl font-bold">#pending#</p>
+        </div>
+        <i class="ph ph-clock text-2xl"></i>
+      </div>
+      <div class="bg-yellow-100 text-yellow-800 p-4 rounded flex items-center justify-between">
+        <div>
+          <h3 class="text-xs md:text-sm opacity-80">In Progress</h3>
+          <p class="text-2xl font-bold">#inprogress#</p>
+        </div>
+        <i class="ph ph-gear text-2xl"></i>
+      </div>
+      <div class="bg-green-100 text-green-800 p-4 rounded flex items-center justify-between">
+        <div>
+          <h3 class="text-xs md:text-sm opacity-80">Ready for Delivery</h3>
+          <p class="text-2xl font-bold">#ready#</p>
+        </div>
+        <i class="ph ph-truck text-2xl"></i>
+      </div>
+      <div class="bg-purple-100 text-purple-800 p-4 rounded flex items-center justify-between">
+        <div>
+          <h3 class="text-xs md:text-sm opacity-80">Delivered</h3>
+          <p class="text-2xl font-bold">#delivered#</p>
+        </div>
+        <i class="ph ph-check-circle text-2xl"></i>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <cfif NOT foundToday>
+      <div class="rounded-lg border border-dashed border-gray-300 p-6 text-center text-gray-500 mb-4">
+        No orders scheduled for today.
+      </div>
+    </cfif>
+
+    <!-- Today's Orders -->
+    <h3 class="text-md font-semibold mb-3">Today's Orders</h3>
+    <div class="divide-y" id="ordersList">
+      <cfloop query="orders">
+        <cfif dateFormat(EstimatedDeliveryDate, "yyyy-mm-dd") EQ todayStr>
+          <cfset status = Status>
+          <cfset badgeClasses = "bg-gray-100 text-gray-700">
+          <cfif status EQ "Pending Pickup" OR status EQ "Pending"><cfset badgeClasses = "bg-blue-100 text-blue-700"></cfif>
+          <cfif status EQ "In Progress" OR status EQ "InProgress"><cfset badgeClasses = "bg-yellow-100 text-yellow-800"></cfif>
+          <cfif status EQ "Ready for Delivery"><cfset badgeClasses = "bg-green-100 text-green-800"></cfif>
+          <cfif status EQ "Delivered"><cfset badgeClasses = "bg-purple-100 text-purple-800"></cfif>
+
+          <div class="py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <i class="ph ph-package text-gray-400"></i>
+              <div>
+                <p class="font-medium">Order #encodeForHTML(OrderID)#</p>
+                <span class="inline-block px-2 py-1 text-xs rounded #badgeClasses#">
+                  #encodeForHTML(status)#
+                </span>
+              </div>
+            </div>
+            <a href="orderDetails.cfm?orderid=#encodeForURL(OrderID)#"
+               class="text-blue-600 text-sm hover:underline">View</a>
+          </div>
+        </cfif>
+      </cfloop>
+    </div>
+  </cfoutput>
+</cfsavecontent>
+
+<!-- If ajax, just return the body -->
+<cfif structKeyExists(url, "ajax")>
+  <cfoutput>#trackerBody#</cfoutput>
+  <cfabort>
+</cfif>
+
+<!-- Full page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen">
+
+  <header class="bg-white p-4 shadow flex justify-between items-center">
+    <h1 class="text-xl font-semibold">Order Status</h1>
+    <a href="dashboard.cfm" class="text-blue-500 text-sm hover:underline">Back to Dashboard</a>
+  </header>
+
+  <main class="p-6 max-w-5xl mx-auto">
+    <div class="bg-white rounded-xl p-6 shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold">Current Order Status</h2>
+        <button id="refreshBtn" class="text-sm text-blue-600 hover:underline">Refresh</button>
+      </div>
+
+      <!-- Live-updating container -->
+      <div id="trackerBody">
+        <cfoutput>#trackerBody#</cfoutput>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Nav -->
+  <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-inner">
+    <div class="flex justify-around h-14 items-center">
+      <a href="dashboard.cfm" class="text-gray-600 flex flex-col items-center text-xs">
+        <i class="ph ph-grid text-xl"></i>
+        Dashboard
+      </a>
+      <a href="tracker.cfm" class="text-blue-600 flex flex-col items-center text-xs">
+        <i class="ph ph-map-pin text-xl"></i>
+        Tracker
+      </a>
+      <a href="profile.cfm" class="flex flex-col items-center text-xs text-gray-600">
+        <i class="ph ph-user-circle text-xl"></i>
+        Profile
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    const container = document.getElementById('trackerBody');
+    const btn = document.getElementById('refreshBtn');
+
+    function refreshTracker() {
+      fetch('tracker.cfm?ajax=1', { cache: 'no-store' })
+        .then(r => r.text())
+        .then(html => { container.innerHTML = html; })
+        .catch(() => {/* ignore errors */});
+    }
+
+    if (btn) btn.addEventListener('click', refreshTracker);
+    // Auto refresh every 10s
+    setInterval(refreshTracker, 10000);
+  </script>
+</body>
+</html>

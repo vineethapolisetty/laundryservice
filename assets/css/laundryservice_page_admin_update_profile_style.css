@@ -1,0 +1,65 @@
+/* Admin Update Profile Styles */
+body {
+  font-family: Inter, Arial, sans-serif;
+  background: #f7f7fb;
+  color: #1f2937;
+  margin: 0;
+  padding: 40px;
+}
+
+.profile-container {
+  max-width: 480px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 18px;
+  background: #5b5ee1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:hover {
+  background: #474ad3;
+}
+
+.alert {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+}

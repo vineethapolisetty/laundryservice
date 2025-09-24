@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Laundry Service Portal - Login Options</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+  
+    :root {
+      --main-bg-color: #f2f2f2;
+    }
+    body {
+      
+      font-family: Arial, sans-serif;
+      background: var(--main-bg-color);
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+    .card {
+      background: white;
+      max-width: 320px;
+      margin: 10px;
+      padding: 30px;
+      width: 280px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-radius: 8px;
+      flex: 1 1 280px;
+    }
+    .card h2 {
+      margin-top: 0;
+    }
+    a.button {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #0066cc;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    a.button:hover {
+      background-color: #004999;
+    }
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .card {
+        width: 98%;
+        max-width: 400px;
+      }
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .card {
+        padding: 18px;
+        width: 100%;
+        max-width: 98%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>👕 Laundry Service Portal</h1>
+  <div class="container">
+    <div class="card">
+      <h2>🧍‍♂️ User</h2>
+      <p>Book laundry, track orders, and manage your profile.</p>
+      <a class="button" href="pages/user/login.cfm">User Login</a>
+    </div>
+    <div class="card">
+      <h2>🧑‍💼 Agent</h2>
+      <p>View pickups, deliveries, and update order status.</p>
+      <a class="button" href="pages/agent/login.cfm">Agent Login</a>
+    </div>
+    <div class="card">
+      <h2>🧑‍💻 Admin</h2>
+      <p>Manage regions, stores, agents, and view reports.</p>
+      <a class="button" href="pages/admin/login.cfm">Admin Login</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+/* Styles extracted for laundryservice/pages/user/profile_upload.cfm */
+body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; padding:20px; }
+    .container { max-width:420px; margin:40px auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+    h2 { margin-top:0; color:#5b5ee1; }
+    input[type=file] { margin:15px 0; }
+    button { background:#5b5ee1; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; }
+    .msg { margin:10px 0; font-size:14px; }
+    .error { color:#c0392b; }
+    a { display:inline-block; margin-top:15px; text-decoration:none; color:#5b5ee1; }
